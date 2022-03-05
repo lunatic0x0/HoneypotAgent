@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-from asyncio.windows_events import NULL
-from doctest import Example
 import os
 import sys
 import subprocess
