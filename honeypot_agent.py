@@ -60,7 +60,7 @@ def parseLogLines(line):
     if data['eventid'] == "cowrie.session.closed":
         print("Session Closed!!!")
         tstamp = correct_timestamp(data['timestamp'])
-        data_list = [data['eventid'], data['src_ip'], "", "", "", data['session'], "", data['message'], data['sensor'], tstamp, data['duration']]
+        data_list = [data['eventid'], data['src_ip'], 0, "", 0, data['session'], "", data['message'], data['sensor'], tstamp, data['duration']]
         send_data_to_database(data_list, CONNECTIONS)
 
     if data['eventid'] == "cowrie.login.failed":
