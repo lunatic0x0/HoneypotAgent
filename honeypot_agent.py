@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from asyncio.windows_events import NULL
 from doctest import Example
 import os
 import sys
@@ -56,7 +57,13 @@ def parseLogLines(line):
         print("Got connection!!!")
         tstamp = correct_timestamp(data['timestamp'])
         data_list = [data['eventid'], data['src_ip'], data['src_port'], data['dst_ip'], data['dst_port'], data['session'], data['protocol'], data['message'], data['sensor'], tstamp, 0]
-        send_data_to_database(data_list, CONNECTIONS)    
+        send_data_to_database(data_list, CONNECTIONS)
+
+    if data['eventid'] == "cowrie.session.closed":
+        print("Session Closed!!!")
+        tstamp = correct_timestamp(data['timestamp'])
+        data_list = [data['eventid'], data['src_ip'], NULL, NULL, NULL, data['session'], NULL, data['message'], data['sensor'], tstamp, data['duration']]
+        send_data_to_database(data_list, CONNECTIONS)
 
     if data['eventid'] == "cowrie.login.failed":
         print("Failed Login Attempt!!!")
@@ -69,6 +76,8 @@ def parseLogLines(line):
         tstamp = correct_timestamp(data['timestamp'])
         data_list = [data['eventid'], data['username'], data['password'], data['message'], data['sensor'], tstamp, data['src_ip'], data['session']]
         send_data_to_database(data_list, LOGIN_ATTEMPT)
+
+    
 
 
 def tail(file, lnum):
