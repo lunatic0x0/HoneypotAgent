@@ -35,7 +35,13 @@ def send_data_to_database(data_list, data_type):
             if data_type == LOGIN_ATTEMPT:
                 sql_query = """INSERT INTO {} VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""".format(data_type)
                 query_values = (data_list[0], data_list[1], data_list[2], data_list[3], data_list[4], data_list[5], data_list[6], data_list[7])
-            
+            if data_type == CMDLINE_INPUT:
+                sql_query = """INSERT INTO {} VALUES (%s, %s, %s, %s, %s, %s)""".format(data_type)
+                query_values = (data_list[0], data_list[1], data_list[2], data_list[3], data_list[4], data_list[5])
+            if data_type == FILE_DOWNLOAD:
+                sql_query = """INSERT INTO {} VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""".format(data_type)
+                query_values = (data_list[0], data_list[1], data_list[2], data_list[3], data_list[4], data_list[5], data_list[6], data_list[7], data_list[8])
+                
             hp_cursor.execute(sql_query, query_values)
             honeypot_db.commit()
             print("Successfully inserted data.. !!!")
@@ -50,33 +56,47 @@ def correct_timestamp(tmp):
 
 
 def parseLogLines(line):
-    data = json.loads(line)
-    if data['eventid'] == "cowrie.session.connect":
-        print("Got connection!!!")
-        tstamp = correct_timestamp(data['timestamp'])
-        data_list = [data['eventid'], data['src_ip'], data['src_port'], data['dst_ip'], data['dst_port'], data['session'], data['protocol'], data['message'], data['sensor'], tstamp, 0]
-        send_data_to_database(data_list, CONNECTIONS)
+    try:
+        data = json.loads(line)
+        if data['eventid'] == "cowrie.session.connect":
+            print("Got connection!!!")
+            tstamp = correct_timestamp(data['timestamp'])
+            data_list = [data['eventid'], data['src_ip'], data['src_port'], data['dst_ip'], data['dst_port'], data['session'], data['protocol'], data['message'], data['sensor'], tstamp, 0]
+            send_data_to_database(data_list, CONNECTIONS)
 
-    if data['eventid'] == "cowrie.session.closed":
-        print("Session Closed!!!")
-        tstamp = correct_timestamp(data['timestamp'])
-        data_list = [data['eventid'], data['src_ip'], 0, "", 0, data['session'], "", data['message'], data['sensor'], tstamp, data['duration']]
-        send_data_to_database(data_list, CONNECTIONS)
+        if data['eventid'] == "cowrie.session.closed":
+            print("Session Closed!!!")
+            tstamp = correct_timestamp(data['timestamp'])
+            data_list = [data['eventid'], data['src_ip'], 0, "", 0, data['session'], "", data['message'], data['sensor'], tstamp, data['duration']]
+            send_data_to_database(data_list, CONNECTIONS)
 
-    if data['eventid'] == "cowrie.login.failed":
-        print("Failed Login Attempt!!!")
-        tstamp = correct_timestamp(data['timestamp'])
-        data_list = [data['eventid'], data['username'], data['password'], data['message'], data['sensor'], tstamp, data['src_ip'], data['session']]    
-        send_data_to_database(data_list, LOGIN_ATTEMPT)
-    
-    if data['eventid'] == "cowrie.login.success":
-        print("Successful Login Attempt!!!")
-        tstamp = correct_timestamp(data['timestamp'])
-        data_list = [data['eventid'], data['username'], data['password'], data['message'], data['sensor'], tstamp, data['src_ip'], data['session']]
-        send_data_to_database(data_list, LOGIN_ATTEMPT)
+        if data['eventid'] == "cowrie.login.failed":
+            print("Failed Login Attempt!!!")
+            tstamp = correct_timestamp(data['timestamp'])
+            data_list = [data['eventid'], data['username'], data['password'], data['message'], data['sensor'], tstamp, data['src_ip'], data['session']]    
+            send_data_to_database(data_list, LOGIN_ATTEMPT)
+        
+        if data['eventid'] == "cowrie.login.success":
+            print("Successful Login Attempt!!!")
+            tstamp = correct_timestamp(data['timestamp'])
+            data_list = [data['eventid'], data['username'], data['password'], data['message'], data['sensor'], tstamp, data['src_ip'], data['session']]
+            send_data_to_database(data_list, LOGIN_ATTEMPT)
 
-    if data['eventid'] == "cowrie.command.input":
-        print()
+        if data['eventid'] == "cowrie.command.input":
+            if data['input'] != "":
+                print("Command Entered!!!")
+                tstamp = correct_timestamp(data['timestamp'])
+                data_list = [data['eventid'], data['input'], data['message'], tstamp, data['src_ip'], data['session']]
+                send_data_to_database(data_list, CMDLINE_INPUT)
+        
+        if data['eventid'] == "cowrie.session.file_download":
+            print("File Downloaded!!!")
+            tstamp = correct_timestamp(data['timestamp'])
+            data_list = [data['eventid'], data['url'], data['outfile'], data['sha256'], data['sensor'], tstamp, data['message'], data['src_ip'], data['session']]
+            send_data_to_database(data_list, FILE_DOWNLOAD)
+
+    except Exception as e:
+        print(e)
 
 
 def tail(file, lnum):
