@@ -1,0 +1,290 @@
+{%extends 'base.html' %}
+
+{%block title %}  Honey Analysis {%endblock title %}
+
+{%block scripts %}
+
+<script>
+
+    ///// API URLS /////
+    var src_ip_chart_api_api = 'api/chart/src_ip'
+    var total_attack_count_api = 'api/chart/attack_count'
+    var top_username_count_api = 'api/chart/username_count'
+    var top_password_count_api = 'api/chart/password_count'
+
+    ///// Chart Initializations ////// 
+    var srcip_chart
+    var username_chart
+    var password_chart
+    
+    ///// Global Variables //////
+    var ip_labels = []
+    var ipcounts = []
+
+    var username_labels = []
+    var username_counts = []
+
+    var password_labels = []
+    var password_counts = []
+
+    var total_attack_count = 0
+    var unique_ip_count = 0
+
+    ///// Document Ready Function ////// 
+    $(document).ready(function(){
+        var today = new Date();
+        var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+        sourceipaddresschartajax(date)
+        totalattackcountajax(date)
+        usernamecountajax(date)
+        passwordcountajax(date)
+    });
+
+
+    ///// Charts Functions //////
+
+    function get_source_ip_chart(){
+        if (srcip_chart){
+            srcip_chart.destroy()
+        }
+        var ctx = document.getElementById('source_ip_chart').getContext('2d');
+        
+        srcip_chart = new Chart(ctx, {
+            type: 'horizontalBar',
+            fill : true,
+            data: {
+                labels: iplabels,
+                datasets: [{
+                    label: 'Source ip Address',
+                    data: ipcounts,
+                    backgroundColor: "#FF6666",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    }
+
+    function get_username_chart(){
+        if (username_chart){
+            username_chart.destroy()
+        }
+        var ctx = document.getElementById('username_chart').getContext('2d');
+        
+        srcip_chart = new Chart(ctx, {
+            type: 'horizontalBar',
+            fill : true,
+            data: {
+                labels: username_labels,
+                datasets: [{
+                    label: 'Source ip Address',
+                    data: username_counts,
+                    backgroundColor: "#FF6666",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    }
+
+    function get_password_chart(){
+        if (password_chart){
+            password_chart.destroy()
+        }
+        var ctx = document.getElementById('password_chart').getContext('2d');
+        
+        srcip_chart = new Chart(ctx, {
+            type: 'horizontalBar',
+            fill : true,
+            data: {
+                labels: password_labels,
+                datasets: [{
+                    label: 'Source ip Address',
+                    data: password_counts,
+                    backgroundColor: "#FF6666",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    }
+
+    ////// Ajax Functions //////
+    function sourceipaddresschartajax(date){
+        $.ajax({
+            method: "POST", 
+            url: src_ip_chart_api,
+            data: {"hp_time":date},
+            success: function(res_data){
+                iplabels = res_data.ip_label
+                ipcounts = res_data.ip_count
+                get_source_ip_chart()
+            }, 
+            error: function(error_data){}
+        })
+    }
+
+    function totalattackcountajax(date){
+
+        $.ajax({
+            method: "POST",
+            url: total_attack_count_api,
+            data: {"hp_time":date},
+            success: function(res_data){
+                total_attack_count = res_data.total_attack_count
+                unique_ip_count = res_data.unique_ip_count
+            },
+            error: function(error_data){}
+        })
+    }
+
+    function usernamecountajax(date){
+        $.ajax({
+            method: "POST",
+            url: top_username_count_api,
+            data: {"hp_time":date},
+            success: function(res_data){
+                username_labels = res_data.usernames
+                username_counts = res_data.username_counts
+                get_username_chart()
+            },
+            error: function(error_data){}
+        })
+    }
+
+    function passwordcountajax(date){
+        $.ajax({
+            method: "POST",
+            url: top_password_count_api,
+            data: {"hp_time":date},
+            success: function(res_data){
+                password_labels = res_data.passwords
+                password_counts = res_data.password_counts
+                get_password_chart()
+            },
+            error: function(error_data){}
+        })
+    }
+
+    function buttonclick(){
+
+        var dateinput = $('#dateinput').val();
+        sourceipaddresschartajax(dateinput);
+
+    }
+</script> 
+
+{%endblock scripts %}
+
+{%block content %}
+
+<div class='row'>
+    <div class='col-sm-2'>
+        <input type="date" class="form-control" id="dateinput"/>
+    </div>
+    <div class='col-sm-1'>
+        <button id="refreshbutton" type="button" class="btn btn-primary" onclick="buttonclick()">Refresh</button>
+    </div>
+</div>
+
+<div class='row'>
+    <div class='col-sm-3' style="position:relative">
+        <canvas id="source_ip_chart" width="400" height="400"></canvas>
+    </div>    
+    <div class='col-sm-1'></div>
+    <div class='col-sm-2' style="position:relative">
+        <h3> Honeypot Attacks </h3>
+        <script type="text/javascript">
+            document.write(total_attack_count)
+            document.write(unique_ip_count)
+        </script>
+    </div>
+</div>
+
+<div class='row'>
+    <div class='col-sm-3' style="position:relative">
+        <canvas id="username_chart" width="400" height="400"></canvas>
+    </div>    
+    <div class='col-sm-1'></div>
+    <div class='col-sm-3' style="position:relative">
+        <canvas id="password_chart" width="400" height="400"></canvas>
+    </div>  
+</div>
+
+
+
+<!-- <style>
+    .chartBox {
+        width: 50px;
+        height: 20px;
+        font-weight: 200;
+        font-family: 'Times New Roman', Times, serif;
+        color: white ;
+    }
+    
+</style>
+
+<div>
+    <canvas id="source_ip_count_chart" width="150" height="20"></canvas>
+</div>
+<style>
+    .chartBox {
+        width: 40px;
+        height: 10px;
+        font-weight: 200;
+        font-family: 'Times New Roman', Times, serif;
+    }
+</style> 
+ 
+<div>
+    <canvas id="name_chart" width="150" height="20"></canvas>
+</div>
+<style>
+    .chartBox {
+        width: 40px;
+        height: 10px;
+        font-weight: 200;
+        font-family: 'Times New Roman', Times, serif;
+    }
+</style> 
+
+<div>
+<table>
+    <tr>
+        <th>Field 1</th>
+        <th>Field N</th>
+    </tr>
+    {% for item in data %}
+    <tr> 
+        <td>{{ item.data.user_name }}</td>
+        <td>{{ item.data.user_count }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div> -->
+
+{%endblock content %}
