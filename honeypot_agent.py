@@ -12,7 +12,7 @@ LOG_FILE = "/home/cowrie/cowrie/var/log/cowrie/cowrie.json"
 
 def database_init():
     try:
-        honeypot_db = mysql.connector.connect(host="192.168.0.104", user="root", password="Crisann345", database = "honeypot_data")
+        honeypot_db = mysql.connector.connect(host="192.168.0.104", user="root", password="", database = "honeypot_data")
     except Exception as e:
         print(e)
 
